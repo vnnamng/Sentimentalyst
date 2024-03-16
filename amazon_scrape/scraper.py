@@ -32,7 +32,7 @@ def scrape_reviews(product_id):
     print(f"Scraping reviews for {product_id}")
     driver.get(f"http://www.amazon.com/product-reviews/{product_id}")
     
-    with open("reviews.csv", "a", newline="") as csvfile:
+    with open("reviews.csv", "a", newline="", encoding="utf-8") as csvfile:
         writer = csv.writer(csvfile, quoting=csv.QUOTE_NONNUMERIC)
         for n in range(1, 6):
             star_filter = wait_and_get_element(By.XPATH,
@@ -41,14 +41,16 @@ def scrape_reviews(product_id):
                 print(f"No {n} star reviews for {product_id}")
                 continue
             action_chain(star_filter).click().perform()
+            if n > 1 and reviews:
+                wait.until(EC.all_of(*map(EC.staleness_of, reviews)))
             time.sleep(1)
-            lst = wait_and_get_elements(By.XPATH,
+            reviews = wait_and_get_elements(By.XPATH,
                 "//div[contains(@id,'customer_review')]//span[@data-hook='review-body']")
-            if not lst:
+            if not reviews:
                 print(f"Error fetching {n} star reviews for {product_id}")
                 continue
-            for elem in lst:
-                writer.writerow([elem.text, n])
+            for review in reviews:
+                writer.writerow([review.text, n])
 
 if __name__ == "__main__":
     # Set up driver
@@ -71,6 +73,12 @@ if __name__ == "__main__":
     driver.get("https://www.amazon.com/Best-Sellers/zgbs")
     product_ids = wait_and_get_elements(By.XPATH,
         "//li[@class='a-carousel-card']/div")
+    if not product_ids:
+        time.sleep(3)
+        driver.refresh()
+        driver.get("https://www.amazon.com/Best-Sellers/zgbs")
+        product_ids = wait_and_get_elements(By.XPATH,
+            "//li[@class='a-carousel-card']/div")
     product_ids = [elem.get_attribute("data-asin") for elem in product_ids]
     print(f"{len(product_ids)} products found")
 
