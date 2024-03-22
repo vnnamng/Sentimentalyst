@@ -22,12 +22,14 @@ def clean_data(df):
   
   # Remove punctuation
   df['review_text'] = df['review_text'].apply(lambda x: x.translate(str.maketrans('', '', string.punctuation)))
-  # Replace non-ASCII characters with empty character
-  df['review_text'] = df['review_text'].apply(lambda x: ''.join([i if ord(i) < 128 else '' for i in x]))
   
+  # Replace all row that has non ASCII with empty string
+  df['review_text'] = df['review_text'].apply(lambda x: x == ''.join([i if ord(i) < 128 else '' for i in x]) if 
+                                              x else "")
+
   # Remove rows with empty review_text
   df = df[df['review_text']!='']
 
   return df
 
-clean_data(data)
+print(clean_data(data).describe())
