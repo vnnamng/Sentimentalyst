@@ -1,6 +1,7 @@
 import pandas as pd
 import emoji
 import string
+from langdetect import detect
 
 
 
@@ -27,7 +28,14 @@ def clean_data(df):
   df['review_text'] = df['review_text'].apply(lambda x: x if x == ''.join([i if ord(i) < 128 else '' for i in x]) else "")
 
   # Remove rows with empty review_text
-  df = df[df['review_text']!='']
+  df = df[df['review_text'] != '']
+  # Remove rows that are not in English
+  for index, row in df.iterrows():
+    try:
+      if detect(row['review_text']) != 'en':
+        df.drop(index, inplace=True)
+    except:
+      df.drop(index, inplace=True)
 
   return df
 
